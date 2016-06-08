@@ -171,6 +171,7 @@ export default Ember.Component.extend({
   },
 
   documentClick(evt) {
+    Ember.Logger.debug('[[documentClick]]');
     if (get(this, 'disabled')) { return; }
 
     set(this, 'pressed', false);
@@ -183,11 +184,17 @@ export default Ember.Component.extend({
     });
 
     if (!clicked && !clickedAnyTarget) {
+      Ember.Logger.debug("no target was clicked, set pressed false");
       targets.setEach('pressed', false);
     }
   },
 
-  areAnyTargetsActive: bool('activeTargets.length'),
+  areAnyTargetsActive: computed('targets.@each.active', function() {
+    Ember.Logger.debug("computing areAnyTargetsActive");
+    return get(this, 'targets').any(function (item) {
+      Ember.Logger.debug("targets active state is", get(item, 'active'));
+      return get(item, 'active') === true;});
+  }),
 
   activeTargets: filterBy('targets', 'active', true),
 
@@ -219,9 +226,11 @@ export default Ember.Component.extend({
     menu.
    */
   visibilityDidChange: on('init', observer('areAnyTargetsActive', function () {
+    Ember.Logger.debug("[[visibilityDidChange]]");
     var proxy = this.__documentClick = this.__documentClick || bind(this, 'documentClick');
 
     var active = get(this, 'areAnyTargetsActive');
+    Ember.Logger.debug('areAnyTargetsActive', active);
     var inactive = !active;
     var visible = get(this, 'active');
     var hidden = !visible;
@@ -232,6 +241,7 @@ export default Ember.Component.extend({
 
     // Remove click events immediately
     } else if (inactive && visible) {
+      Ember.Logger.debug("no target active and isvisible");
       $(document).off('mousedown', proxy);
       this.hide();
     }
@@ -254,6 +264,7 @@ export default Ember.Component.extend({
   },
 
   tile() {
+    Ember.Logger.debug("tile");
     var target = get(this, 'activeTarget');
     // Don't tile if there's nothing to constrain the pop over around
     if (!get(this, 'element') || !target) {
